@@ -2,35 +2,52 @@ package com.lukflug.hartree;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Atom {
 	private final double dr;
-	private final double a;
 	private final int z;
-	private double zEff;
+	private double a,zInit,zEff;
 	private List<Electron> electrons=new ArrayList<Electron>();
-	public Lock lock=new ReentrantLock();
 	
-	public Atom (double dr, double a, int z, int zEff) {
+	public Atom (double dr, double a, int z, double zInit) {
 		this.dr=dr;
 		this.a=a;
 		this.z=z;
-		this.zEff=zEff;
+		this.zInit=zInit;
+		this.zEff=zInit;
 	}
 	
 	public void addElectron (int size, int n, int l) {
 		electrons.add(new Electron(size,dr,n,l));
 	}
 	
-	public void updateElectrons (double step) {
+	public String updateElectrons (double step, Screen screen) {
 		for (Electron e: electrons) {
-			e.calcEnergy(new Potential(e),a,zEff);
+			synchronized (this) {
+			if (!e.calcEnergy(new Potential(e),a,zEff)) {
+				return "No convergence for n="+e.getPrincipalNumber()+" and l="+e.getAzimuthalNumber()+"!";
+			}
+			}
+			et=e;
+			screen.repaint();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
-		zEff+=step;
-		if (zEff>z) zEff=z;
+		if (zInit<z) {
+			zEff+=step;
+			if (zEff>z) zEff=z;
+		} else {
+			zEff-=step;
+			if (zEff<z) zEff=z;
+		}
+		return null;
 	}
+	
+	Electron et=null;
 	
 	public List<Electron> getElectrons() {
 		return electrons;
@@ -41,7 +58,7 @@ public class Atom {
 	}
 	
 	public Field getElectronPotential() {
-		return new Potential(null);
+		return new Potential(et);
 	}
 	
 	public double getTotalEnergy() {
@@ -54,6 +71,15 @@ public class Atom {
 			}
 		}
 		return energy;
+	}
+	
+	public synchronized Atom createCopy() {
+		Atom copy=new Atom(dr,a,z,zEff);
+		copy.zEff=zEff;
+		for (Electron e: electrons) {
+			copy.getElectrons().add(e.createCopy());
+		}
+		return copy;
 	}
 	
 	
