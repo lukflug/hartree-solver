@@ -5,7 +5,7 @@ public class Electron extends ArrayField {
 	private double e=0;
 	private ArrayField pot;
 	private boolean inited=false;
-	private static final double F=1;
+	public static double f=.5;
 	private static final double M=1822.888486209;
 	
 	public Electron (int size, double dr, int n, int l) {
@@ -28,36 +28,57 @@ public class Electron extends ArrayField {
 	}
 	
 	public boolean calcEnergy (Field v, double a, double z) {
+		// Cache hamiltonian
+		double h[]=new double[array.length];
+		double mass=M/(1/a+M);
+		for (int i=1;i<array.length;i++) {
+			double r=i*dr;
+			h[i]=2*mass*v.getValue(i)+l*(l+1)/r/r;
+		}
+		// Allocate temporary wavefunction
+		double temp[]=new double[array.length];
+		// Find energy
 		int nr=n-l;
 		double last=0;
 		double start=-z*z;
 		int count=1;
-		double temp[]=new double[array.length];
 		while (true) {
-			update(v,start/count,a,temp);
+			update(h,start/count,a,temp);
 			if (last*temp[temp.length-1]<0) {
 				nr--;
 				if (nr==0) break;
 			}
 			count++;
 			last=temp[temp.length-1];
-			if (count>1000) return false;
+			if (count>10000) {
+				System.out.println("Energy level not found!");
+				return false;
+			}
 		}
 		double max=start/count;
 		double min=start/(count-1);
 		int attempts=0;
 		do {
-			update(v,(min+max)/2,a,temp);
+			update(h,(min+max)/2,a,temp);
 			if (last*temp[temp.length-1]<0) max=e;
 			else min=e;
 			attempts++;
-			if (attempts>1000) return false;
-		} while (Math.abs(temp[temp.length-1])>.01);
+			if (attempts>10000) return false;
+		} while (Math.abs(temp[temp.length-1])>.001);
+		// Update wavefunction and normalize
+		double prob=0;
+		for (int i=0;i<array.length;i++) {
+			if (inited) array[i]=f*temp[i]+(1-f)*array[i];
+			else array[i]=temp[i];
+			prob+=array[i]*array[i]*dr;
+		}
+		for (int i=0;i<array.length;i++) {
+			array[i]/=Math.sqrt(prob);
+		}
+		// Calculate potential
 		double q=-1;
 		pot.array[array.length-1]=-q/(array.length-1)/dr;
 		for (int i=array.length-2;i>0;i--) {
-			if (inited) array[i]=F*temp[i]+Math.sqrt(1-F*F)*array[i];
-			else array[i]=temp[i];
 			q+=array[i+1]*array[i+1]*dr;
 			pot.array[i]=pot.array[i+1]-q/dr*(1.0/i-1.0/(i+1));
 		}
@@ -65,15 +86,16 @@ public class Electron extends ArrayField {
 		return true;
 	}
 	
-	private void update (Field v, double e, double a, double temp[]) {
-		double mass=M/(1/a+M);
+	private void update (double h[], double e, double a, double temp[]) {
+		double shift=2*M/(1/a+M)*e;
 		temp[0]=0;
-		temp[1]=dr;
+		double vel=1;
+		temp[1]=vel*dr;
 		double prob=temp[1]*temp[1]*dr;
-		for (int i=2;i<temp.length;i++) {
-			double r=(i-1)*dr;
-			temp[i]=2*temp[i-1]-temp[i-2]+(2*mass*(v.getValue(i-1)-e)+l*(l+1)/r/r)*temp[i-1]*dr*dr;
-			prob+=temp[i]*temp[i]*dr;
+		for (int i=1;i<temp.length-1;i++) {
+			vel+=(h[i]-shift)*temp[i]*dr;
+			temp[i+1]=temp[i]+vel*dr;
+			prob+=temp[i+1]*temp[i+1]*dr;
 		}
 		for (int i=0;i<temp.length;i++) {
 			temp[i]/=Math.sqrt(prob);

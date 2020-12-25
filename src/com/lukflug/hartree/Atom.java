@@ -21,20 +21,12 @@ public class Atom {
 		electrons.add(new Electron(size,dr,n,l));
 	}
 	
-	public String updateElectrons (double step, Screen screen) {
+	public String updateElectrons (double step) {
 		for (Electron e: electrons) {
 			synchronized (this) {
-			if (!e.calcEnergy(new Potential(e),a,zEff)) {
-				return "No convergence for n="+e.getPrincipalNumber()+" and l="+e.getAzimuthalNumber()+"!";
-			}
-			}
-			et=e;
-			screen.repaint();
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				if (!e.calcEnergy(new Potential(e),a,zEff)) {
+					return "No convergence for n="+e.getPrincipalNumber()+" and l="+e.getAzimuthalNumber()+"!";
+				}
 			}
 		}
 		if (zInit<z) {
@@ -47,8 +39,6 @@ public class Atom {
 		return null;
 	}
 	
-	Electron et=null;
-	
 	public List<Electron> getElectrons() {
 		return electrons;
 	}
@@ -58,7 +48,7 @@ public class Atom {
 	}
 	
 	public Field getElectronPotential() {
-		return new Potential(et);
+		return new Potential(null);
 	}
 	
 	public double getTotalEnergy() {

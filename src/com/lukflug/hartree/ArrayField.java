@@ -12,7 +12,7 @@ public class ArrayField implements Field {
 	@Override
 	public double getValue(double r) {
 		double index=r/dr;
-		if (index>=array.length-1) return array[array.length-1];
+		if (index>=array.length-1) return 0;
 		int i=(int)Math.floor(index);
 		double a=index-i;
 		return (1-a)*array[i]+a*array[i+1];
