@@ -5,7 +5,7 @@ public class Electron extends ArrayField {
 	private double e=0;
 	private ArrayField pot;
 	private boolean inited=false;
-	public static double f=.5;
+	public static double f=.5,tol=.0001,maxCount=10000,maxAtt=10000;
 	private static final double M=1822.888486209;
 	
 	public Electron (int size, double dr, int n, int l) {
@@ -50,7 +50,7 @@ public class Electron extends ArrayField {
 			}
 			count++;
 			last=temp[temp.length-1];
-			if (count>10000) {
+			if (count>maxCount) {
 				System.out.println("Energy level not found!");
 				return false;
 			}
@@ -63,8 +63,8 @@ public class Electron extends ArrayField {
 			if (last*temp[temp.length-1]<0) max=e;
 			else min=e;
 			attempts++;
-			if (attempts>10000) return false;
-		} while (Math.abs(temp[temp.length-1])>.001);
+			if (attempts>maxAtt) return false;
+		} while (Math.abs(temp[temp.length-1])>tol);
 		// Update wavefunction and normalize
 		double prob=0;
 		for (int i=0;i<array.length;i++) {
