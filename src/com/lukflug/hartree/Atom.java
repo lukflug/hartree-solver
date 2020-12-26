@@ -72,6 +72,14 @@ public class Atom {
 		return copy;
 	}
 	
+	public double getAtomicNumber() {
+		return zEff;
+	}
+	
+	public double getAtomicWeight() {
+		return a;
+	}
+	
 	
 	private class Potential implements Field {
 		private final Electron e1;

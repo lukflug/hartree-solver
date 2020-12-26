@@ -5,7 +5,8 @@ public class Electron extends ArrayField {
 	private double e=0;
 	private ArrayField pot;
 	private boolean inited=false;
-	public static double f=.5,tol=.0001,maxCount=10000,maxAtt=10000;
+	private int roots;
+	public static double f=1,tol=.0001,maxAtt=1000;
 	private static final double M=1822.888486209;
 	
 	public Electron (int size, double dr, int n, int l) {
@@ -15,7 +16,7 @@ public class Electron extends ArrayField {
 		pot=new ArrayField(size,dr) {
 			@Override
 			public double getValue(double r) {
-				if (r>=(array.length-1)*dr && inited) return 1/r;
+				if (r/dr>=array.length-1 && inited) return 1/r;
 				return super.getValue(r);
 			}
 			
@@ -35,36 +36,13 @@ public class Electron extends ArrayField {
 			double r=i*dr;
 			h[i]=2*mass*v.getValue(i)+l*(l+1)/r/r;
 		}
-		// Allocate temporary wavefunction
-		double temp[]=new double[array.length];
 		// Find energy
-		int nr=n-l;
-		double last=0;
-		double start=-z*z;
-		int count=1;
-		while (true) {
-			update(h,start/count,a,temp);
-			if (last*temp[temp.length-1]<0) {
-				nr--;
-				if (nr==0) break;
-			}
-			count++;
-			last=temp[temp.length-1];
-			if (count>maxCount) {
-				System.out.println("Energy level not found!");
-				return false;
-			}
-		}
-		double max=start/count;
-		double min=start/(count-1);
-		int attempts=0;
-		do {
-			update(h,(min+max)/2,a,temp);
-			if (last*temp[temp.length-1]<0) max=e;
-			else min=e;
-			attempts++;
-			if (attempts>maxAtt) return false;
-		} while (Math.abs(temp[temp.length-1])>tol);
+		double temp[]=new double[array.length];
+		int nr=n-l-1;
+		if (inited && findEnergy(nr,2*e,0,h,a,temp));
+		else if (findEnergy(nr,-z*z,0,h,a,temp));
+		else if (findEnergy(nr+1,-z*z,0,h,a,temp));
+		else return false;
 		// Update wavefunction and normalize
 		double prob=0;
 		for (int i=0;i<array.length;i++) {
@@ -86,7 +64,24 @@ public class Electron extends ArrayField {
 		return true;
 	}
 	
+	private boolean findEnergy (int nr, double min, double max, double h[], double a, double temp[]) {
+		int attempts=0;
+		while (true) {
+			update(h,(min+max)/2,a,temp);
+			if (roots>nr) max=e;
+			else min=e;
+			double last=temp[temp.length-1];
+			if (Math.abs(last)<=tol && ((roots==nr && last*Math.pow(-1,nr)>=0) || (roots==nr+1 && last*Math.pow(-1,nr)<=0))) {
+				break;
+			}
+			attempts++;
+			if (attempts>maxAtt) return false;
+		}
+		return true;
+	}
+	
 	private void update (double h[], double e, double a, double temp[]) {
+		roots=0;
 		double shift=2*M/(1/a+M)*e;
 		temp[0]=0;
 		double vel=1;
@@ -96,6 +91,7 @@ public class Electron extends ArrayField {
 			vel+=(h[i]-shift)*temp[i]*dr;
 			temp[i+1]=temp[i]+vel*dr;
 			prob+=temp[i+1]*temp[i+1]*dr;
+			if (temp[i+1]*temp[i]<0) roots++;
 		}
 		for (int i=0;i<temp.length;i++) {
 			temp[i]/=Math.sqrt(prob);

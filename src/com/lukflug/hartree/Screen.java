@@ -42,6 +42,7 @@ public class Screen extends JPanel {
 				synchronized (Screen.this) {
 					dr=value/1000.0;
 				}
+				Screen.this.repaint();
 			}
 		});
 		JSlider waveScaleSlider=new JSlider(100,500,200);
@@ -52,6 +53,7 @@ public class Screen extends JPanel {
 				synchronized (Screen.this) {
 					waveScale=Math.pow(10,value/100.0);
 				}
+				Screen.this.repaint();
 			}
 		});
 		JSlider densityScaleSlider=new JSlider(100,500,200);
@@ -62,6 +64,7 @@ public class Screen extends JPanel {
 				synchronized (Screen.this) {
 					densityScale=Math.pow(10,value/100.0);
 				}
+				Screen.this.repaint();
 			}
 		});
 		JSlider potentialScaleSlider=new JSlider(100,500,200);
@@ -72,11 +75,10 @@ public class Screen extends JPanel {
 				synchronized (Screen.this) {
 					potentialScale=Math.pow(10,value/100.0);
 				}
+				Screen.this.repaint();
 			}
 		});
-		JFrame dialog=new JFrame("Graph Settings");
 		JPanel panel=new JPanel();
-		dialog.setMinimumSize(new Dimension(300,0));
 		panel.add(new Label("Length scale:"));
 		panel.add(drSlider);
 		panel.add(new Label("Wavefunction scale:"));
@@ -87,6 +89,8 @@ public class Screen extends JPanel {
 		panel.add(potentialScaleSlider);
 		panel.setLayout(new BoxLayout(panel,BoxLayout.PAGE_AXIS));
 		panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+		JFrame dialog=new JFrame("Display Settings");
+		dialog.setMinimumSize(new Dimension(300,0));
 		dialog.add(panel);
 		dialog.pack();
 		dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -121,7 +125,7 @@ public class Screen extends JPanel {
 		g.setColor(new Color(255,0,0));
 		drawGraph(g,atom.getElectronPotential(),potentialScale);
 		g.setColor(new Color(255,0,255));
-		g.drawString("E="+atom.getTotalEnergy(),0,HEIGHT);
+		g.drawString("<E>="+atom.getTotalEnergy(),0,HEIGHT);
 	}
 	
 	private void drawGraph (Graphics g, Field field, double scale) {
