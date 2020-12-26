@@ -70,7 +70,7 @@ public class Electron extends ArrayField {
 			update(h,(min+max)/2,a,temp);
 			if (roots>nr) max=e;
 			else min=e;
-			double last=temp[temp.length-1];
+			double last=temp[0];
 			if (Math.abs(last)<=tol && ((roots==nr && last*Math.pow(-1,nr)>=0) || (roots==nr+1 && last*Math.pow(-1,nr)<=0))) {
 				break;
 			}
@@ -83,15 +83,14 @@ public class Electron extends ArrayField {
 	private void update (double h[], double e, double a, double temp[]) {
 		roots=0;
 		double shift=2*M/(1/a+M)*e;
-		temp[0]=0;
-		double vel=1;
-		temp[1]=vel*dr;
+		temp[temp.length-1]=dr;
+		double vel=-Math.sqrt(-2*e)*temp[temp.length-1];
 		double prob=temp[1]*temp[1]*dr;
-		for (int i=1;i<temp.length-1;i++) {
-			vel+=(h[i]-shift)*temp[i]*dr;
-			temp[i+1]=temp[i]+vel*dr;
-			prob+=temp[i+1]*temp[i+1]*dr;
-			if (temp[i+1]*temp[i]<0) roots++;
+		for (int i=temp.length-1;i>=1;i--) {
+			vel-=(h[i]-shift)*temp[i]*dr;
+			temp[i-1]=temp[i]-vel*dr;
+			prob+=temp[i-1]*temp[i-1]*dr;
+			if (temp[i-1]*temp[i]<0) roots++;
 		}
 		for (int i=0;i<temp.length;i++) {
 			temp[i]/=Math.sqrt(prob);
