@@ -11,6 +11,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JTextArea;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -19,8 +20,18 @@ public class Screen extends JPanel {
 	private static final int WIDTH=800,HEIGHT=600;
 	private final Atom atom;
 	private double dr=.02,waveScale=100,densityScale=100,potentialScale=100;
+	private final JTextArea textArea;
 
 	public Screen (String title, Atom atom) {
+		JFrame energyScreen=new JFrame("Electron Energies");
+		textArea=new JTextArea(atom.getElectrons().size()+2,25);
+		textArea.setEditable(false);
+		energyScreen.add(textArea);
+		energyScreen.pack();
+		energyScreen.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		energyScreen.setResizable(false);
+		energyScreen.setLocationRelativeTo(null);
+		energyScreen.setVisible(true);
 		this.atom=atom;
 		JFrame frame=new JFrame(title);
 		setPreferredSize(new Dimension(WIDTH,HEIGHT));
@@ -56,7 +67,7 @@ public class Screen extends JPanel {
 				Screen.this.repaint();
 			}
 		});
-		JSlider densityScaleSlider=new JSlider(100,500,200);
+		JSlider densityScaleSlider=new JSlider(10,500,200);
 		densityScaleSlider.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
@@ -112,20 +123,18 @@ public class Screen extends JPanel {
 			int fontWidth=g.getFontMetrics().stringWidth(df.format(r));
 			g.drawString(df.format(r),(int)(r/dr-fontWidth/2),HEIGHT/2-6);
 		}
-		int y=g.getFontMetrics().getHeight();
+		String energyText="";
 		for (Electron e: atom.getElectrons()) {
-			g.setColor(new Color(0,0,0));
-			g.drawString("E="+e.getEnergy(),0,y);
-			y+=g.getFontMetrics().getHeight();
+			energyText+="E="+e.getEnergy()+"\n";
 			g.setColor(new Color(0,0,255));
 			drawGraph(g,e,waveScale);
 		}
+		energyText+="\n<E>="+atom.getTotalEnergy();
+		textArea.setText(energyText);
 		g.setColor(new Color(0,255,0));
 		drawGraph(g,atom.getElectronDensity(),densityScale);
 		g.setColor(new Color(255,0,0));
 		drawGraph(g,atom.getElectronPotential(),potentialScale);
-		g.setColor(new Color(255,0,255));
-		g.drawString("<E>="+atom.getTotalEnergy(),0,HEIGHT);
 	}
 	
 	private void drawGraph (Graphics g, Field field, double scale) {

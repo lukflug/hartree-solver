@@ -58,7 +58,7 @@ public class Electron extends ArrayField {
 		pot.array[array.length-1]=-q/(array.length-1)/dr;
 		for (int i=array.length-2;i>0;i--) {
 			q+=array[i+1]*array[i+1]*dr;
-			pot.array[i]=pot.array[i+1]-q/dr*(1.0/i-1.0/(i+1));
+			pot.array[i]=pot.array[i+1]+q/dr*(1.0/(i+1)-1.0/i);
 		}
 		inited=true;
 		return true;
@@ -85,7 +85,7 @@ public class Electron extends ArrayField {
 		double shift=2*M/(1/a+M)*e;
 		temp[temp.length-1]=dr;
 		double vel=-Math.sqrt(-2*e)*temp[temp.length-1];
-		double prob=temp[1]*temp[1]*dr;
+		double prob=temp[temp.length-1]*temp[temp.length-1]*dr;
 		for (int i=temp.length-1;i>=1;i--) {
 			vel-=(h[i]-shift)*temp[i]*dr;
 			temp[i-1]=temp[i]-vel*dr;
